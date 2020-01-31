@@ -1,0 +1,179 @@
+%!TEX program = xelatex
+\documentclass[11pt,dvipsnames,table]{beamer}
+\usepackage[no-math,cm-default]{fontspec}
+\usepackage[indentfirst]{xeCJK}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{verbatim}
+\usepackage{indentfirst}
+\usepackage{syntonly}
+\usepackage{beamerthemesplit}
+\usepackage{ulem}
+\usepackage{listings}
+\usepackage{etoolbox}
+
+\usetheme{Berlin}
+\usecolortheme{beaver}
+\usefonttheme[onlymath]{serif}
+\CJKsetecglue{}
+\setbeamerfont{section in toc}{size=\fontsize{10pt}{\baselineskip}}
+
+%\setbeamerfont{normal text}{size=9pt}
+
+\setCJKmainfont[BoldFont={SimHei},ItalicFont={KaiTi}]{SimSun}
+\setmonofont[Scale=1]{Courier New}
+
+\newcommand{\hlink}[1]{
+	\footnote{\fontsize{6pt}{\baselineskip}\href{#1}{\textsl{\underline{#1}}}}
+}
+\newcommand{\image}[4]
+{\begin{figure}[h]
+	\centering
+	\includegraphics[width=#3 \textwidth]{image/#2}
+	\caption{#4}\label{#1}
+\end{figure}}
+\newcommand{\graph}[2]
+{\begin{figure}[h]
+	\centering
+	\includegraphics[width=#2 \textwidth]{image/#1}
+\end{figure}}
+
+\lstset{language=C++,
+	extendedchars=false,
+	basicstyle=\ttfamily\footnotesize,
+	keywordstyle=\bfseries\color{blue},
+	identifierstyle=\color{blue!60!black},
+	commentstyle=\itshape\color{gray},
+	escapeinside=`'}
+
+\setlength{\parindent}{2em}
+\setlength{\baselineskip}{1.3\baselineskip}
+
+\setbeamercolor{math text}{fg=black}
+\setbeamertemplate{qed symbol}{$\square$}
+\setbeamerfont{headline}{size=\fontsize{7.5pt}{\baselineskip}}
+\setbeamerfont{footline}{size=\fontsize{7.5pt}{\baselineskip}}
+\setbeamertemplate{theorems}[numbered]
+\renewcommand{\thetheorem}{\arabic{subsubsection}.\arabic{theorem}}
+\renewcommand{\thelemma}{\arabic{subsubsection}.\arabic{lemma}}
+\newenvironment{qedframe}{%
+	\begin{frame}[environment=qedqedframe]%
+	}{%
+	\qed
+	\end{frame}%
+}
+\renewcommand{\appendixname}{结语}
+
+\makeatletter
+\patchcmd{\beamer@sectionintoc}{\vskip1.5em}{\vskip1em}{}{}
+\makeatother
+
+\begin{document}
+
+\title[网络流]{\fontsize{24pt}{\baselineskip}网络流}
+\subtitle[模型与例题]{\fontsize{16pt}{\baselineskip}模型与例题\\ 进阶篇}
+\author{清华大学计算机系~~胡泽聪}
+\institute[清华大学计算机系~~胡泽聪]{}
+\date{}
+
+\maketitle
+
+{\fontsize{9pt}{\baselineskip}
+
+\section{前言}
+\subsection{}
+\begin{frame}
+	无需多言。
+\end{frame}
+
+\section[Model VIII]{区间选择}
+\subsection{}
+\begin{frame}
+	\frametitle{区间选择}
+	对于长度为$n$的数组，我们设立$n+1$个点构成一条链，相邻的点之间连边，费用为对应数组中元素的值。再从$S$向前$n$个点，从后$n$个点向$T$连边，一条增广路就对应一个区间。
+	
+	非常简洁而且直观的模型。
+	
+	然而，简洁却不简单。
+\end{frame}
+\subsection{TCO09 Championship Round D1L2}
+\begin{frame}
+	\frametitle{ArrayTransformations\hlink{http://community.topcoder.com/stat?c=problem\_statement\&pm=10428} - 题意}
+	给定序列$a$，记$a$的元素个数为$n$。
+	
+	称一次变换为：选定区间$[i,j]$，满足$1\leq i\leq j\leq n$，对序列$a$在区间中的每个数减1，如果已经为0则不操作。这样一次变换的代价为$j-i+1$。
+	
+	对于给定序列$a$，最大变换次数$k$和最大代价和$m$，求：在使用不超过$k$次变换，总变换代价不超过$m$的前提下，$a$中最大元素的最小值是多少。
+	
+	$n\leq 250$。
+\end{frame}
+\begin{frame}
+	\frametitle{ArrayTransformations - 模型}
+	首先二分答案，把问题转换成判定性问题。
+	
+	现在的问题是，能否在限制下使$a$中最大元素不超过一个值$p$。\pause
+	
+	容易发现，变换的顺序并不影响最后的结果。
+	
+	对于$a_i$，变换的最小代价应为$\max(a_i-P,0)$。那么我们令$b_i=\max(a_i-P,0)$。
+	
+	那么限制条件实际上就是要确定不超过$K$条线段，使得数轴上$i$的位置被覆盖了至少$b_i$次，且线段总长不超过$M$。
+\end{frame}
+\begin{frame}
+	\frametitle{ArrayTransformations - 模型}
+	据此可以建立下面的网络流模型：
+	
+	建立标号为1到$n+1$的点，以及$S'$和$T'$节点。
+	
+	从$S$向$S'$连一条容量为$K$的边、从$T'$向$T$连一条容量为$K$、费用为0的边。
+	
+	从$i$号点$i+1$号点连一条容量为$\infty$、容量下界为$a_i-P$、费用为1的边。
+	
+	从$S'$向$1\sim n$号节点、从$2\sim n+1$号节点向$T'$连一条容量为$\infty$、费用为0的边。
+	
+	一次变换，即一条线段$[i,j]$，在网络中会是$S\rightarrow S'\rightarrow i\rightarrow i+1\rightarrow \ldots\rightarrow j\rightarrow T'\rightarrow T$的一条增广路。
+	
+	如果最小费用最大可行流得到的费用不超过$M$，那么答案合法。
+\end{frame}
+
+\subsection{Codeforces Round \#172 (Div. 1) - D}
+\begin{frame}
+	\frametitle{k-Maximum Subsequence Sum\hlink{http://codeforces.com/contest/280/problem/D} - 题意}
+	给定一个长度为$n$的序列，有$q$次操作。操作有2种：
+	\begin{enumerate}
+		\item 修改一个元素的值。
+		\item 查询一个区间中的最大$k-$子段和。
+	\end{enumerate}
+	$n,m\leq 10^5$，$k\leq 20$。
+\end{frame}
+\begin{frame}
+	\frametitle{k-Maximum Subsequence Sum - 模型}
+	吓到了吧，这题可是大数据结构题，怎么会和网络流有关？
+	
+	首先单次$O(k^2\log n)$的算法是不难的，但是会超时。我们需要一个$O(k\log n)$的算法。\pause
+	\vskip 1em
+	我们按照类似上题中的方法建费用流模型。显然最大费用最大流就是答案。但这样反而比暴力还慢。
+	
+	不妨考察连续最短路算法的执行过程：我们每次是在干什么？
+\end{frame}
+\begin{frame}
+	\frametitle{k-Maximum Subsequence Sum - 模型}
+	结合这个模型的性质，我们可以发现我们每次要么选择一个与已有区间完全不相交的区间，要么从已有区间中间挖掉一段。
+	
+	换句话说就是：每次贪心选择一个最大和子区间，然后取负。
+	
+	我们还可以发现，每次都会使区间数+1。因此我们可以用线段树维护最大子段和，并支持取负操作，然后每次询问就在线段树上询问$k$次，之后复原即可。修改也很容易实现。
+\end{frame}
+
+\appendix
+\section{}
+\begin{frame}
+	\frametitle{Fin.}
+	\centering
+	\LARGE
+	谢谢大家！欢迎课后交流。
+\end{frame}
+}
+
+\end{document}

@@ -1,0 +1,169 @@
+%!TEX program = xelatex
+\documentclass[11pt,dvipsnames,table]{beamer}
+\usepackage[no-math,cm-default]{fontspec}
+\usepackage[indentfirst]{xeCJK}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{verbatim}
+\usepackage{indentfirst}
+\usepackage{syntonly}
+\usepackage{beamerthemesplit}
+\usepackage{ulem}
+\usepackage{listings}
+\usepackage{etoolbox}
+
+\usetheme{Berlin}
+\usecolortheme{beaver}
+\usefonttheme[onlymath]{serif}
+\CJKsetecglue{}
+\setbeamerfont{section in toc}{size=\fontsize{10pt}{\baselineskip}}
+
+%\setbeamerfont{normal text}{size=9pt}
+
+\setCJKmainfont[BoldFont={SimHei},ItalicFont={KaiTi}]{SimSun}
+\setmonofont[Scale=1]{Courier New}
+
+\newcommand{\hlink}[1]{
+	\footnote{\fontsize{6pt}{\baselineskip}\href{#1}{\textsl{\underline{#1}}}}
+}
+\newcommand{\image}[4]
+{\begin{figure}[h]
+	\centering
+	\includegraphics[width=#3 \textwidth]{image/#2}
+	\caption{#4}\label{#1}
+\end{figure}}
+\newcommand{\graph}[2]
+{\begin{figure}[h]
+	\centering
+	\includegraphics[width=#2 \textwidth]{image/#1}
+\end{figure}}
+
+\lstset{language=C++,
+	extendedchars=false,
+	basicstyle=\ttfamily\footnotesize,
+	keywordstyle=\bfseries\color{blue},
+	identifierstyle=\color{blue!60!black},
+	commentstyle=\itshape\color{gray},
+	escapeinside=`'}
+
+\setlength{\parindent}{2em}
+\setlength{\baselineskip}{1.3\baselineskip}
+
+\setbeamercolor{math text}{fg=black}
+\setbeamertemplate{qed symbol}{$\square$}
+\setbeamerfont{headline}{size=\fontsize{7.5pt}{\baselineskip}}
+\setbeamerfont{footline}{size=\fontsize{7.5pt}{\baselineskip}}
+\setbeamertemplate{theorems}[numbered]
+\renewcommand{\thetheorem}{\arabic{subsubsection}.\arabic{theorem}}
+\renewcommand{\thelemma}{\arabic{subsubsection}.\arabic{lemma}}
+\newenvironment{qedframe}{%
+	\begin{frame}[environment=qedqedframe]%
+	}{%
+	\qed
+	\end{frame}%
+}
+\renewcommand{\appendixname}{结语}
+
+\makeatletter
+\patchcmd{\beamer@sectionintoc}{\vskip1.5em}{\vskip1em}{}{}
+\makeatother
+
+\begin{document}
+
+\title[网络流]{\fontsize{24pt}{\baselineskip}网络流}
+\subtitle[模型与例题]{\fontsize{16pt}{\baselineskip}模型与例题\\ 进阶篇}
+\author{清华大学计算机系~~胡泽聪}
+\institute[清华大学计算机系~~胡泽聪]{}
+\date{}
+
+\maketitle
+
+{\fontsize{9pt}{\baselineskip}
+
+\section{前言}
+\subsection{}
+\begin{frame}
+	无需多言。
+\end{frame}
+
+\section[Model VII]{限制距离}
+\subsection{}
+\begin{frame}
+	\frametitle{基础概念}
+	这类模型是一类网络流最小割模型，用于描述每个点有若干种不同选择，标号为连续的整数，选择有各自的代价。同时有若干限制条件，为$x_i-x_j\leq d$的形式，其中$x_i$和$x_j$为$i$和$j$的选择的标号。
+\end{frame}
+
+\subsection{HNOI2013 (BZOJ3144)}
+\begin{frame}
+	\frametitle{切糕\hlink{http://www.lydsy.com/JudgeOnline/problem.php?id=3144} - 题意}
+	$p\times q$的网格，每个位置都有$r$个取值的选择，每个选择有各自的代价。要求四连通相邻的两个位置的值相差不超过$d$。问最小代价和。
+	
+	$p,q,r\leq 40$。
+\end{frame}
+\begin{frame}
+	\frametitle{切糕 - 模型}
+	对每个位置的每个选择设点，形成一条链，相邻位置的边的流量为选择的代价。\pause
+	
+	由于每个位置只能选择一个取值，因此自然想到最小割。现在加入距离限制。限制可以描述为$x_i\geq x_j-d$，其中$i$和$j$相邻。网络流中的限制通常用无穷大的边来描述。\pause
+	
+	因此对于相邻的$(x,y)$和$(x',y')$以及$d\leq k\leq r$，连边$(x,y,k)\rightarrow(x',y',k-d):\infty$。
+	
+	这个图的最小割就是答案。
+\end{frame}
+
+\subsection{TopCoder SRM590 D1L3}
+\begin{frame}
+	\frametitle{FoxAndCity\hlink{http://community.topcoder.com/stat?c=problem\_statement\&pm=12727} - 题意}
+	给定$n$个点的无向图，边权均为$1$。每个点有一个属性$w_i$。现在可以在图中任意加边，记加边后每个点到1号点的距离为$d_i$，最小化$\sum(w_i-d_i)^2$。
+\end{frame}
+\begin{frame}
+	\frametitle{FoxAndCity - 模型}
+	我们考察一下最终的距离应当满足怎样的性质。
+	\begin{itemize}
+		\item[性质1] $d_1=0$。\pause
+		\item[性质2] 对于已经存在的边$i\leftrightarrow j$，必有$|d_i-d_j|\leq 1$。\pause
+	\end{itemize}
+	
+	除此之外呢？\pause
+	
+	事实上，只要满足这两个条件，就能构造出符合条件的图。\pause
+	\vskip 1em
+	此时相当于每个点有$n-1$个选择，原本有边相连的两点$i$和$j$应满足$d_i-d_j\leq 1$以及$d_j-d_i\leq 1$。变成了上面一题的模型。
+\end{frame}
+
+\subsection{CTSC2009}
+\begin{frame}
+	\frametitle{移民站选址\footnote{\fontsize{6pt}{\baselineskip}提交答案题} - 题意}
+	已有$n$个移民站，第$i$个坐标为$(u_i,v_i)$。还需建立$m$个新的移民站，记坐标为$(x_i,y_i)$。移民站之间需要传输数据，第$i$个旧站和第$j$个新站之间要传$a_{ij}$的数据，第$i$个新站和第$j$个新站之间要传$b_{ij}$的数据。传输代价是两个站之间传输的数据量乘上两个站之间的曼哈顿距离。求最小代价和。
+	
+	虽说是提交答案题，但可以当成普通题来做。
+\end{frame}
+\begin{frame}
+	\frametitle{移民站选址 - 模型}
+	我们需要先得出一些结论：
+	\begin{itemize}
+		\item[结论1] 横纵坐标无关，可以分开当成一维问题做。\pause
+		\item[结论2] 一定存在一个最优方案，使得每个新站都与某个旧站重合。
+	\end{itemize}
+\end{frame}
+\begin{frame}
+	\frametitle{移民站选址 - 模型}
+	那么问题可以变成，$m$个位置，每个有$n$种选择，代价即为其与旧站的传输代价和。不同位置间的选择也会带来代价。\pause
+	
+	我们这样连边：对于任意的新站$i$和$j$以及任意的$1<k\leq n$，连边$(i,k)\leftrightarrow (j,k):b_{ij}$。不难发现，如果$i$的选择是$p_i$，$j$的选择是$p_j$，则还会有$|p_i-p_j|$条这样的边被割掉，即为应有的传输代价。
+	
+	最后的答案就是最小割。
+\end{frame}
+
+\appendix
+\section{}
+\begin{frame}
+	\frametitle{Fin.}
+	\centering
+	\LARGE
+	谢谢大家！欢迎课后交流。
+\end{frame}
+}
+
+\end{document}
